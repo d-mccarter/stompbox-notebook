@@ -74,9 +74,9 @@ export default function App() {
                 className="tool-link"
                 onClick={() => setScreen('led')}
               >
-                <span className="tool-link-title">LED limiter</span>
+                <span className="tool-link-title">LED resistor calculator</span>
                 <span className="tool-link-desc">
-                  Schematic, color table, and resistor calculator
+                  CLR from colour, supply, and target brightness
                 </span>
               </button>
               <button

@@ -1,31 +1,149 @@
 import { useMemo, useState } from 'react'
 import {
+  calculateDriveCurrent,
   calculateLimiterResistor,
+  evaluateChosenResistor,
+  formatCurrent,
+  formatCurrentMa,
   formatOhms,
   formatWatts,
   LED_COLOR_PRESETS,
+  RATED_BRIGHTNESS_PRESETS,
+  recommendedWattage,
+  TARGET_BRIGHTNESS_PRESETS,
 } from './calc'
 import './LedNotes.css'
 
+type ConfigMode = 'single' | 'series'
+type BrightMode = 'preset' | 'custom' | 'current'
+
 export function LedNotes() {
+  const [configMode, setConfigMode] = useState<ConfigMode>('single')
+  const [selectedColor, setSelectedColor] = useState(LED_COLOR_PRESETS[0].id)
   const [supply, setSupply] = useState('9')
   const [vf, setVf] = useState('2.0')
-  const [currentMa, setCurrentMa] = useState('10')
-  const [selectedColor, setSelectedColor] = useState(LED_COLOR_PRESETS[0].id)
+  const [ledCount, setLedCount] = useState('2')
+  const [ratedMcd, setRatedMcd] = useState('1000')
+  const [testCurrentMa, setTestCurrentMa] = useState('20')
+  const [ratedPresetId, setRatedPresetId] = useState('high')
+  const [targetPresetId, setTargetPresetId] = useState('bright')
+  const [brightMode, setBrightMode] = useState<BrightMode>('preset')
+  const [targetMcd, setTargetMcd] = useState(800)
+  const [customTargetMcd, setCustomTargetMcd] = useState('250')
+  const [directCurrentMa, setDirectCurrentMa] = useState('15')
+  const [chosenOhms, setChosenOhms] = useState<number | null>(null)
+  const [copied, setCopied] = useState(false)
+
+  const color = LED_COLOR_PRESETS.find((p) => p.id === selectedColor) ?? LED_COLOR_PRESETS[0]
+  const numLeds = configMode === 'series' ? Math.max(1, Math.floor(Number(ledCount)) || 1) : 1
+
+  const drive = useMemo(() => {
+    if (brightMode === 'current') {
+      const ma = Number(directCurrentMa)
+      return {
+        ma,
+        rawMa: ma,
+        clampLo: false,
+        clampHi: false,
+        valid: Number.isFinite(ma) && ma > 0,
+      }
+    }
+    const target =
+      brightMode === 'custom' ? Number(customTargetMcd) : targetMcd
+    return calculateDriveCurrent(Number(ratedMcd), Number(testCurrentMa), target)
+  }, [
+    brightMode,
+    customTargetMcd,
+    directCurrentMa,
+    ratedMcd,
+    targetMcd,
+    testCurrentMa,
+  ])
 
   const result = useMemo(() => {
-    return calculateLimiterResistor(
-      Number(supply),
-      Number(vf),
-      Number(currentMa),
-    )
-  }, [supply, vf, currentMa])
+    if (!drive.valid) {
+      return calculateLimiterResistor({
+        supplyVolts: Number(supply),
+        forwardVolts: Number(vf),
+        currentMa: NaN,
+        numLeds,
+      })
+    }
+    return calculateLimiterResistor({
+      supplyVolts: Number(supply),
+      forwardVolts: Number(vf),
+      currentMa: drive.ma,
+      numLeds,
+    })
+  }, [drive.ma, drive.valid, numLeds, supply, vf])
+
+  // Reset chosen resistor when the recommended value changes
+  const recommendedOhms = result.valid ? result.ohmsNearestE24 : null
+  const activeOhms =
+    chosenOhms != null &&
+    result.valid &&
+    result.nearbyE24.includes(chosenOhms)
+      ? chosenOhms
+      : recommendedOhms
+
+  const evaluation =
+    result.valid && activeOhms != null
+      ? evaluateChosenResistor(
+          result.voltageDrop,
+          activeOhms,
+          Number(ratedMcd),
+          Number(testCurrentMa),
+        )
+      : null
+
+  const brightnessHint = useMemo(() => {
+    if (brightMode === 'current') {
+      return 'Setting the current directly. Estimated brightness below comes from the rated mcd above.'
+    }
+    if (!drive.valid) return ''
+    let txt = `Drives about ${formatCurrentMa(drive.ma)}`
+    if (drive.clampHi) txt += " (capped: this LED can't reach that brightness)"
+    else if (drive.clampLo) txt += ' (raised to a reliable minimum)'
+    return txt
+  }, [brightMode, drive])
 
   function applyColor(id: string) {
     const preset = LED_COLOR_PRESETS.find((p) => p.id === id)
     if (!preset) return
     setSelectedColor(id)
     setVf(String(preset.vf))
+    setChosenOhms(null)
+  }
+
+  function applyRatedPreset(id: string) {
+    const preset = RATED_BRIGHTNESS_PRESETS.find((p) => p.id === id)
+    if (!preset) return
+    setRatedPresetId(id)
+    setRatedMcd(String(preset.mcd))
+    setChosenOhms(null)
+  }
+
+  function applyTargetPreset(id: string) {
+    const preset = TARGET_BRIGHTNESS_PRESETS.find((p) => p.id === id)
+    if (!preset) return
+    setTargetPresetId(id)
+    setBrightMode(preset.mode)
+    if (preset.mode === 'preset' && preset.mcd != null) {
+      setTargetMcd(preset.mcd)
+    }
+    setChosenOhms(null)
+  }
+
+  async function copyResult() {
+    if (activeOhms == null) return
+    const text = formatOhms(activeOhms)
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 1500)
+    } catch {
+      /* clipboard may be unavailable */
+    }
   }
 
   return (
@@ -33,32 +151,335 @@ export function LedNotes() {
       <header className="led-notes-header">
         <p className="led-notes-kicker">LED tool</p>
         <h1 id="led-notes-title" className="led-notes-title">
-          Current limiter
+          LED resistor calculator
         </h1>
         <p className="led-notes-lede">
-          Series resistor math for pedal indicator LEDs — polarity marks,
-          schematic, typical values by color, and a quick calculator.
+          Current-limiting resistor (CLR) for pedal LEDs — pick colour, supply,
+          and brightness to get the right value.
         </p>
       </header>
 
-      <section className="led-schematic-block" aria-labelledby="led-schematic-title">
-        <h2 id="led-schematic-title" className="led-section-title">
-          Basic circuit
-        </h2>
-        <div className="led-schematic-wrap" aria-hidden="true">
-          <LedSchematic />
+      <div className="led-config-tabs" role="tablist" aria-label="LED configuration">
+        <button
+          type="button"
+          role="tab"
+          className={`led-config-tab${configMode === 'single' ? ' is-active' : ''}`}
+          aria-selected={configMode === 'single'}
+          onClick={() => {
+            setConfigMode('single')
+            setChosenOhms(null)
+          }}
+        >
+          Single LED
+        </button>
+        <button
+          type="button"
+          role="tab"
+          className={`led-config-tab${configMode === 'series' ? ' is-active' : ''}`}
+          aria-selected={configMode === 'series'}
+          onClick={() => {
+            setConfigMode('series')
+            setChosenOhms(null)
+          }}
+        >
+          LEDs in series
+        </button>
+      </div>
+
+      <div className="led-tool-card">
+        <div className="led-tool-group">
+          <span className="led-tool-label">LED colour preset</span>
+          <div className="led-presets" role="group" aria-label="LED colour">
+            {LED_COLOR_PRESETS.map((preset) => (
+              <button
+                key={preset.id}
+                type="button"
+                className={`led-preset${selectedColor === preset.id ? ' is-active' : ''}`}
+                onClick={() => applyColor(preset.id)}
+              >
+                <span
+                  className="led-dot"
+                  style={{ backgroundColor: preset.swatch }}
+                  aria-hidden="true"
+                />
+                {preset.label}
+              </button>
+            ))}
+          </div>
         </div>
-        <p className="led-formula">
-          <span className="led-formula-label">Formula</span>
-          <span className="led-formula-math">
-            R = (V<sub>s</sub> − V<sub>f</sub>) / I
+
+        <label className="led-tool-group field">
+          <span className="field-label">Supply voltage (V)</span>
+          <input
+            className="field-input"
+            type="text"
+            inputMode="decimal"
+            value={supply}
+            onChange={(e) => {
+              setSupply(e.target.value)
+              setChosenOhms(null)
+            }}
+          />
+        </label>
+
+        <label className="led-tool-group field">
+          <span className="field-label">
+            LED forward voltage (V<sub>f</sub>)
           </span>
-        </p>
-        <p className="led-schematic-note">
-          The resistor drops the leftover voltage so LED current stays in a safe
-          range. For 9 V pedals, 5–15 mA is typical for a panel LED.
-        </p>
-      </section>
+          <input
+            className="field-input"
+            type="text"
+            inputMode="decimal"
+            value={vf}
+            onChange={(e) => {
+              setVf(e.target.value)
+              setChosenOhms(null)
+            }}
+          />
+        </label>
+
+        {configMode === 'series' ? (
+          <label className="led-tool-group field">
+            <span className="field-label">Number of LEDs in series</span>
+            <input
+              className="field-input"
+              type="text"
+              inputMode="numeric"
+              value={ledCount}
+              onChange={(e) => {
+                setLedCount(e.target.value)
+                setChosenOhms(null)
+              }}
+            />
+          </label>
+        ) : null}
+
+        <div className="led-tool-group">
+          <span className="led-tool-label">
+            LED rated brightness (luminous intensity)
+          </span>
+          <div className="led-presets" role="group" aria-label="Rated brightness">
+            {RATED_BRIGHTNESS_PRESETS.map((preset) => (
+              <button
+                key={preset.id}
+                type="button"
+                className={`led-preset${ratedPresetId === preset.id ? ' is-active' : ''}`}
+                onClick={() => applyRatedPreset(preset.id)}
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
+          <div className="led-input-row">
+            <label className="field">
+              <span className="field-label">Rated intensity (mcd)</span>
+              <input
+                className="field-input"
+                type="text"
+                inputMode="decimal"
+                value={ratedMcd}
+                onChange={(e) => {
+                  setRatedMcd(e.target.value)
+                  setRatedPresetId('')
+                  setChosenOhms(null)
+                }}
+              />
+            </label>
+            <label className="field">
+              <span className="field-label">At test current (mA)</span>
+              <input
+                className="field-input"
+                type="text"
+                inputMode="decimal"
+                value={testCurrentMa}
+                onChange={(e) => {
+                  setTestCurrentMa(e.target.value)
+                  setChosenOhms(null)
+                }}
+              />
+            </label>
+          </div>
+          <p className="led-hint">
+            Use the figure from your LED’s datasheet or store listing if you
+            have it. The presets are typical ballparks.
+          </p>
+        </div>
+
+        <div className="led-tool-group">
+          <span className="led-tool-label">Target brightness on the pedal</span>
+          <div
+            className="led-presets"
+            role="group"
+            aria-label="Target brightness"
+          >
+            {TARGET_BRIGHTNESS_PRESETS.map((preset) => (
+              <button
+                key={preset.id}
+                type="button"
+                className={`led-preset${targetPresetId === preset.id ? ' is-active' : ''}`}
+                onClick={() => applyTargetPreset(preset.id)}
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
+          {brightnessHint ? <p className="led-hint">{brightnessHint}</p> : null}
+        </div>
+
+        {brightMode === 'custom' ? (
+          <label className="led-tool-group field">
+            <span className="field-label">Target intensity (mcd)</span>
+            <input
+              className="field-input"
+              type="text"
+              inputMode="decimal"
+              value={customTargetMcd}
+              placeholder="e.g. 200"
+              onChange={(e) => {
+                setCustomTargetMcd(e.target.value)
+                setChosenOhms(null)
+              }}
+            />
+          </label>
+        ) : null}
+
+        {brightMode === 'current' ? (
+          <label className="led-tool-group field">
+            <span className="field-label">Current (mA)</span>
+            <input
+              className="field-input"
+              type="text"
+              inputMode="decimal"
+              value={directCurrentMa}
+              placeholder="e.g. 10"
+              onChange={(e) => {
+                setDirectCurrentMa(e.target.value)
+                setChosenOhms(null)
+              }}
+            />
+          </label>
+        ) : null}
+
+        <div className="led-circuit-wrap" aria-hidden="true">
+          <LedCircuitDiagram
+            supply={Number(supply) || 9}
+            ohms={result.valid && activeOhms != null ? activeOhms : null}
+            currentA={evaluation?.actualCurrentA ?? null}
+            numLeds={numLeds}
+            ledColour={color.swatch}
+          />
+        </div>
+
+        <div className="led-calc-result" aria-live="polite">
+          {!result.valid || activeOhms == null || evaluation == null ? (
+            result.message?.startsWith('Not enough voltage') ? (
+              <p className="led-warning">
+                <strong>Not enough voltage.</strong>{' '}
+                {result.message.replace(/^Not enough voltage —?\s*/i, '')}
+              </p>
+            ) : (
+              <p className="led-calc-empty">
+                {result.message ?? 'Enter valid values above to calculate.'}
+              </p>
+            )
+          ) : (
+            <>
+              <div className="led-result-card">
+                <div className="led-result-header">
+                  <div>
+                    <p className="led-result-value">{formatOhms(activeOhms)}</p>
+                    <p className="led-result-alts">
+                      Exact: {result.ohmsExact.toFixed(1)} Ω
+                      {activeOhms !== result.ohmsNearestE24
+                        ? ` · Recommended: ${formatOhms(result.ohmsNearestE24)}`
+                        : result.ohmsBelowE24 !== result.ohmsNearestE24
+                          ? ` · Next lower: ${formatOhms(result.ohmsBelowE24)}`
+                          : null}
+                    </p>
+                  </div>
+                  <button type="button" className="led-copy-btn" onClick={copyResult}>
+                    {copied ? 'Copied!' : 'Copy'}
+                  </button>
+                </div>
+
+                <div className="led-result-details">
+                  <p>
+                    <strong>Actual current:</strong>{' '}
+                    {formatCurrent(evaluation.actualCurrentA)}
+                  </p>
+                  {evaluation.emittedMcd != null ? (
+                    <p>
+                      <strong>Estimated brightness:</strong> ~
+                      {Math.round(evaluation.emittedMcd)} mcd
+                    </p>
+                  ) : null}
+                  <p>
+                    <strong>Voltage across resistor:</strong>{' '}
+                    {result.voltageDrop.toFixed(2)} V
+                  </p>
+                  <p>
+                    <strong>Power dissipation:</strong>{' '}
+                    {formatWatts(evaluation.powerWatts)}, use a{' '}
+                    {recommendedWattage(evaluation.powerWatts * 2)} resistor or
+                    larger (2× headroom)
+                  </p>
+                </div>
+
+                <div className="led-nearby">
+                  <p className="led-nearby-label">
+                    <strong>Nearby E24 values</strong> (tap to compare):
+                  </p>
+                  <div className="led-std-row">
+                    {result.nearbyE24.map((ohms) => (
+                      <button
+                        key={ohms}
+                        type="button"
+                        className={`led-std-chip${ohms === activeOhms ? ' is-active' : ''}`}
+                        title={`${formatCurrent(result.voltageDrop / ohms)} @ ${formatOhms(ohms)}`}
+                        onClick={() => setChosenOhms(ohms)}
+                      >
+                        {formatOhms(ohms)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {drive.clampHi ? (
+                <p className="led-warning">
+                  <strong>Brightness capped.</strong> Reaching the target would
+                  need more than the 20 mA a standard LED handles, so the
+                  recommendation is set at 20 mA
+                  {evaluation.emittedMcd != null
+                    ? `: about ${Math.round(
+                        evaluateChosenResistor(
+                          result.voltageDrop,
+                          result.ohmsNearestE24,
+                          Number(ratedMcd),
+                          Number(testCurrentMa),
+                        ).emittedMcd ?? 0,
+                      )} mcd, the most this LED will safely give.`
+                    : '.'}{' '}
+                  For more brightness, choose a higher-rated LED.
+                </p>
+              ) : null}
+
+              {evaluation.actualCurrentA > 0.02 ? (
+                <p className="led-warning">
+                  <strong>High current.</strong>{' '}
+                  {formatCurrent(evaluation.actualCurrentA)} exceeds the typical
+                  20 mA maximum for standard LEDs. Consider a higher resistance.
+                </p>
+              ) : null}
+            </>
+          )}
+        </div>
+      </div>
+
+      <p className="led-formula-note">
+        Formula: R = (V<sub>supply</sub> − V<sub>forward</sub>) / I · Always
+        round up to the nearest standard value
+      </p>
 
       <section className="led-polarity-block" aria-labelledby="led-polarity-title">
         <h2 id="led-polarity-title" className="led-section-title">
@@ -88,185 +509,184 @@ export function LedNotes() {
         </ul>
       </section>
 
-      <section className="led-table-block" aria-labelledby="led-table-title">
-        <h2 id="led-table-title" className="led-section-title">
-          Typical resistors by color
+      <section className="led-ref-block" aria-labelledby="led-vf-title">
+        <h2 id="led-vf-title" className="led-section-title">
+          Forward voltage reference
         </h2>
-        <p className="led-table-lede">
-          Suggested series R at <strong>9 V</strong> and <strong>10 mA</strong>.
-          Tap a row to load Vf into the calculator.
-        </p>
         <div className="led-table-scroll">
           <table className="led-table">
             <thead>
               <tr>
-                <th>Color</th>
-                <th>Vf</th>
-                <th>R @ 9 V</th>
+                <th>Colour</th>
+                <th>Typical Vf</th>
+                <th>Range</th>
               </tr>
             </thead>
             <tbody>
               {LED_COLOR_PRESETS.map((preset) => (
                 <tr key={preset.id}>
                   <td>
-                    <button
-                      type="button"
-                      className={`led-color-btn${selectedColor === preset.id ? ' is-active' : ''}`}
-                      onClick={() => applyColor(preset.id)}
-                    >
+                    <span className="led-table-swatch-row">
                       <span
-                        className="led-swatch"
+                        className="led-dot"
                         style={{ backgroundColor: preset.swatch }}
                         aria-hidden="true"
                       />
-                      <span>
-                        <span className="led-color-name">{preset.label}</span>
-                        <span className="led-color-note">{preset.note}</span>
-                      </span>
-                    </button>
+                      {preset.label}
+                    </span>
                   </td>
-                  <td>
-                    <span className="led-mono">{preset.vf.toFixed(1)} V</span>
-                    <span className="led-range">{preset.vfRange}</span>
-                  </td>
-                  <td className="led-mono">{formatOhms(preset.rAt9v10mA)}</td>
+                  <td className="led-mono">{preset.vf.toFixed(1)} V</td>
+                  <td className="led-mono">{preset.vfRange}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </section>
-
-      <section className="led-calc-block" aria-labelledby="led-calc-title">
-        <h2 id="led-calc-title" className="led-section-title">
-          Resistor calculator
-        </h2>
-
-        <div className="led-calc-fields">
-          <label className="field">
-            <span className="field-label">Supply V<sub>s</sub></span>
-            <div className="field-with-unit">
-              <input
-                className="field-input"
-                type="text"
-                inputMode="decimal"
-                value={supply}
-                onChange={(e) => setSupply(e.target.value)}
-              />
-              <span className="field-unit">V</span>
-            </div>
-          </label>
-
-          <label className="field">
-            <span className="field-label">LED V<sub>f</sub></span>
-            <div className="field-with-unit">
-              <input
-                className="field-input"
-                type="text"
-                inputMode="decimal"
-                value={vf}
-                onChange={(e) => setVf(e.target.value)}
-              />
-              <span className="field-unit">V</span>
-            </div>
-          </label>
-
-          <label className="field">
-            <span className="field-label">LED current</span>
-            <div className="field-with-unit">
-              <input
-                className="field-input"
-                type="text"
-                inputMode="decimal"
-                value={currentMa}
-                onChange={(e) => setCurrentMa(e.target.value)}
-              />
-              <span className="field-unit">mA</span>
-            </div>
-          </label>
-        </div>
-
-        <div className="led-calc-readout" aria-live="polite">
-          {result.valid ? (
-            <>
-              <p className="led-calc-value">{formatOhms(result.ohmsExact)}</p>
-              <p className="led-calc-meta">
-                exact · nearest E24 {formatOhms(result.ohmsNearestE24)}
-              </p>
-              <p className="led-calc-meta">
-                resistor dissipation ≈ {formatWatts(result.powerWatts)}
-                {result.powerWatts <= 0.125 ? ' (¼ W OK)' : result.powerWatts <= 0.25 ? ' (use ≥ ¼ W)' : ' (use ≥ ½ W)'}
-              </p>
-            </>
-          ) : (
-            <p className="led-calc-error">{result.message}</p>
-          )}
-        </div>
-      </section>
     </section>
   )
 }
 
-function LedSchematic() {
+function LedCircuitDiagram({
+  supply,
+  ohms,
+  currentA,
+  numLeds,
+  ledColour,
+}: {
+  supply: number
+  ohms: number | null
+  currentA: number | null
+  numLeds: number
+  ledColour: string
+}) {
+  const showLeds = Math.max(1, numLeds)
+  const ledSpacing = 70
+  const baseWidth = 340
+  const svgWidth = baseWidth + (showLeds - 1) * ledSpacing
+  const wireY = 50
+  const botY = 100
+  const colour =
+    ledColour === '#ffffff' || ledColour === '#aaaaaa' ? '#cccccc' : ledColour
+
+  const rX = 60
+  const afterR = rX + 50
+  const firstLedX = afterR + 30
+
+  const ledElements = []
+  for (let i = 0; i < showLeds; i++) {
+    const lx = firstLedX + i * ledSpacing
+    ledElements.push(
+      <g key={i}>
+        {i === 0 ? (
+          <line
+            x1={afterR}
+            y1={wireY}
+            x2={lx - 12}
+            y2={wireY}
+            stroke="#8a9299"
+            strokeWidth="1.5"
+          />
+        ) : (
+          <line
+            x1={lx - ledSpacing + 18}
+            y1={wireY}
+            x2={lx - 12}
+            y2={wireY}
+            stroke="#8a9299"
+            strokeWidth="1.5"
+          />
+        )}
+        <polygon
+          points={`${lx - 12},${wireY - 12} ${lx - 12},${wireY + 12} ${lx + 10},${wireY}`}
+          fill="none"
+          stroke={colour}
+          strokeWidth="1.8"
+        />
+        <line
+          x1={lx + 10}
+          y1={wireY - 12}
+          x2={lx + 10}
+          y2={wireY + 12}
+          stroke={colour}
+          strokeWidth="2"
+        />
+        <path
+          d={`M${lx + 16} ${wireY - 10} l8 -6 M${lx + 18} ${wireY - 2} l8 -5`}
+          stroke={colour}
+          strokeWidth="1.3"
+          fill="none"
+        />
+        <text
+          x={lx}
+          y={wireY + 28}
+          textAnchor="middle"
+          className="sch-sub"
+        >
+          LED{showLeds > 1 ? ` ${i + 1}` : ''}
+        </text>
+      </g>,
+    )
+  }
+
+  const lastLedX = firstLedX + (showLeds - 1) * ledSpacing
+  const endX = lastLedX + 40
+
   return (
-    <svg viewBox="0 0 320 150" className="led-schematic" role="img">
-      <title>LED with series current-limiting resistor</title>
-
-      {/* Supply rails */}
-      <line x1="36" y1="28" x2="36" y2="122" stroke="#152028" strokeWidth="2" />
-      <line x1="28" y1="28" x2="44" y2="28" stroke="#152028" strokeWidth="2.5" />
-      <line x1="30" y1="122" x2="42" y2="122" stroke="#152028" strokeWidth="2.5" />
-      <text x="52" y="32" className="sch-label">
-        Vs
+    <svg
+      viewBox={`0 0 ${svgWidth} 120`}
+      className="led-circuit"
+      role="img"
+      aria-label="Series CLR and LED circuit"
+    >
+      <text x="10" y="36" className="sch-label">
+        +{Number.isFinite(supply) ? supply : 9}V
       </text>
-      <text x="20" y="20" className="sch-label">
-        +
-      </text>
-      <text x="18" y="138" className="sch-label">
-        GND
-      </text>
-
-      {/* Top wire to resistor */}
-      <line x1="36" y1="48" x2="110" y2="48" stroke="#152028" strokeWidth="2" />
-
-      {/* Resistor zig-zag */}
+      <line x1="40" y1={wireY} x2="60" y2={wireY} stroke="#8a9299" strokeWidth="1.5" />
       <polyline
-        points="110,48 118,40 130,56 142,40 154,56 166,40 178,56 186,48"
+        points={`${rX},${wireY} ${rX + 5},${wireY - 8} ${rX + 15},${wireY + 8} ${rX + 25},${wireY - 8} ${rX + 35},${wireY + 8} ${rX + 45},${wireY - 8} ${rX + 50},${wireY}`}
         fill="none"
         stroke="#152028"
-        strokeWidth="2"
+        strokeWidth="1.5"
         strokeLinejoin="round"
       />
-      <text x="148" y="30" textAnchor="middle" className="sch-label">
-        R
+      <text x={rX + 25} y={wireY - 14} textAnchor="middle" className="sch-label">
+        {ohms != null ? formatOhms(ohms) : 'R'}
       </text>
-
-      {/* Wire to LED */}
-      <line x1="186" y1="48" x2="230" y2="48" stroke="#152028" strokeWidth="2" />
-
-      {/* LED diode triangle + bar + arrows */}
-      <polygon points="230,34 230,62 258,48" fill="none" stroke="#152028" strokeWidth="2" />
-      <line x1="258" y1="34" x2="258" y2="62" stroke="#152028" strokeWidth="2.5" />
-      {/* light arrows */}
-      <path d="M266 36 l10 -8" stroke="#2f6f62" strokeWidth="1.5" />
-      <path d="M268 44 l10 -6" stroke="#2f6f62" strokeWidth="1.5" />
-      <path d="M274 34 l4 4 M276 40 l4 4" stroke="#2f6f62" strokeWidth="1.2" />
-      <text x="244" y="78" textAnchor="middle" className="sch-label">
-        LED
+      {ledElements}
+      <line
+        x1={lastLedX + 10}
+        y1={wireY}
+        x2={endX}
+        y2={wireY}
+        stroke="#8a9299"
+        strokeWidth="1.5"
+      />
+      <line
+        x1={endX}
+        y1={wireY}
+        x2={endX}
+        y2={botY}
+        stroke="#8a9299"
+        strokeWidth="1.5"
+      />
+      <line
+        x1="40"
+        y1={botY}
+        x2={endX}
+        y2={botY}
+        stroke="#8a9299"
+        strokeWidth="1.5"
+      />
+      <line x1="40" y1={wireY} x2="40" y2={botY} stroke="#8a9299" strokeWidth="1.5" />
+      <text x="40" y={botY + 14} textAnchor="middle" className="sch-sub">
+        GND
       </text>
-      <text x="244" y="90" textAnchor="middle" className="sch-sub">
-        Vf
-      </text>
-
-      {/* Down to ground */}
-      <line x1="258" y1="48" x2="284" y2="48" stroke="#152028" strokeWidth="2" />
-      <line x1="284" y1="48" x2="284" y2="122" stroke="#152028" strokeWidth="2" />
-      <line x1="36" y1="122" x2="284" y2="122" stroke="#152028" strokeWidth="2" />
-
-      {/* Current annotation */}
-      <text x="160" y="112" textAnchor="middle" className="sch-sub">
-        I through R and LED
-      </text>
+      {currentA != null ? (
+        <text x={svgWidth / 2} y={botY - 8} textAnchor="middle" className="sch-sub">
+          I ≈ {formatCurrent(currentA)}
+        </text>
+      ) : null}
     </svg>
   )
 }
@@ -298,7 +718,6 @@ function LedPolarityDiagram() {
         </linearGradient>
       </defs>
 
-      {/* Single silhouette: dome, skirt, and flat cathode face on the left */}
       <path
         d="M130 82
            L130 52
@@ -315,7 +734,6 @@ function LedPolarityDiagram() {
         strokeWidth="1.5"
         strokeLinejoin="round"
       />
-      {/* Emphasize the flat cathode face */}
       <line
         x1="128"
         y1="50"
@@ -325,8 +743,6 @@ function LedPolarityDiagram() {
         strokeWidth="3"
         strokeLinecap="round"
       />
-
-      {/* Internal posts: large cathode flag (left), small anode post (right) */}
       <rect
         x="134"
         y="58"
@@ -347,8 +763,6 @@ function LedPolarityDiagram() {
         stroke="#152028"
         strokeWidth="1"
       />
-
-      {/* Leads: short cathode left, long anode right */}
       <line
         x1="144"
         y1="74"
@@ -367,8 +781,6 @@ function LedPolarityDiagram() {
         strokeWidth="3"
         strokeLinecap="round"
       />
-
-      {/* Flat-edge callout — same pattern as the capacitor stripe callout */}
       <text x="8" y="46" className="sch-label">
         flat edge
       </text>
@@ -381,8 +793,6 @@ function LedPolarityDiagram() {
         strokeWidth="1.5"
         markerEnd="url(#led-arrow)"
       />
-
-      {/* Lead labels offset outward so they stay clear of the pins */}
       <text x="98" y="122" textAnchor="end" className="sch-label">
         − cathode
       </text>
