@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   COLORS,
   defaultBands,
@@ -7,18 +7,32 @@ import {
   type BandCount,
 } from './colors'
 import { decodeResistor } from './decode'
+import {
+  encodeResistor,
+  parseResistanceInput,
+  swatchAriaLabel,
+  swatchValueLabel,
+  TEMPCO_OPTIONS,
+  TOLERANCE_OPTIONS,
+} from './encode'
 import { ResistorGraphic } from './ResistorGraphic'
 import './ResistorWizard.css'
 
 const BAND_OPTIONS: BandCount[] = [4, 5, 6]
+type WizardMode = 'decode' | 'encode'
 
 export function ResistorWizard() {
+  const [mode, setMode] = useState<WizardMode>('decode')
   const [bandCount, setBandCount] = useState<BandCount>(4)
   const [bands, setBands] = useState<BandColor[]>(() => defaultBands(4))
 
+  const [encodeText, setEncodeText] = useState('4.7k')
+  const [encodeTolerance, setEncodeTolerance] = useState(5)
+  const [encodeTempco, setEncodeTempco] = useState(100)
+
   const slots = useMemo(() => slotsForBands(bandCount), [bandCount])
 
-  const result = useMemo(() => {
+  const decodeResult = useMemo(() => {
     try {
       return { ok: true as const, value: decodeResistor(bands, bandCount) }
     } catch (err) {
@@ -29,9 +43,43 @@ export function ResistorWizard() {
     }
   }, [bands, bandCount])
 
+  const encodeResult = useMemo(() => {
+    const ohms = parseResistanceInput(encodeText)
+    if (ohms === null) {
+      return { ok: false as const, message: 'Enter a value like 4.7k, 4700, or 1M' }
+    }
+    try {
+      return {
+        ok: true as const,
+        value: encodeResistor(
+          {
+            ohms,
+            tolerancePercent: encodeTolerance,
+            tempcoPpm: bandCount === 6 ? encodeTempco : null,
+          },
+          bandCount,
+        ),
+      }
+    } catch (err) {
+      return {
+        ok: false as const,
+        message: err instanceof Error ? err.message : 'Could not encode value',
+      }
+    }
+  }, [encodeText, encodeTolerance, encodeTempco, bandCount])
+
+  // Keep the resistor graphic + shared band state in sync while encoding.
+  useEffect(() => {
+    if (mode !== 'encode') return
+    if (!encodeResult.ok) return
+    setBands(encodeResult.value.bands)
+  }, [mode, encodeResult])
+
   function handleBandCountChange(next: BandCount) {
     setBandCount(next)
-    setBands(defaultBands(next))
+    if (mode === 'decode') {
+      setBands(defaultBands(next))
+    }
   }
 
   function handleBandChange(index: number, color: BandColor) {
@@ -42,17 +90,46 @@ export function ResistorWizard() {
     })
   }
 
+  function handleModeChange(next: WizardMode) {
+    if (next === 'encode' && decodeResult.ok) {
+      // Prefill encode fields from the current decoded bands.
+      const { ohms, tolerancePercent, tempcoPpm } = decodeResult.value
+      setEncodeText(formatEncodePrefill(ohms))
+      setEncodeTolerance(tolerancePercent)
+      if (tempcoPpm !== null) setEncodeTempco(tempcoPpm)
+    }
+    setMode(next)
+  }
+
+  const activeReadout = mode === 'decode' ? decodeResult : encodeResult
+
   return (
     <section className="wizard" aria-labelledby="wizard-title">
       <header className="wizard-header">
-        <p className="wizard-kicker">Decode</p>
+        <p className="wizard-kicker">Resistor tool</p>
         <h1 id="wizard-title" className="wizard-title">
-          Resistor color code
+          Color code
         </h1>
         <p className="wizard-lede">
-          Pick band count, tap each stripe, read resistance and tolerance.
+          {mode === 'decode'
+            ? 'Pick band count, tap each stripe, read resistance and tolerance.'
+            : 'Enter a resistance, pick tolerance, and get the color bands.'}
         </p>
       </header>
+
+      <div className="mode-toggle" role="group" aria-label="Wizard mode">
+        {(['decode', 'encode'] as const).map((option) => (
+          <button
+            key={option}
+            type="button"
+            className={`mode-btn${mode === option ? ' is-active' : ''}`}
+            aria-pressed={mode === option}
+            onClick={() => handleModeChange(option)}
+          >
+            {option === 'decode' ? 'Decode' : 'Encode'}
+          </button>
+        ))}
+      </div>
 
       <div className="band-count" role="group" aria-label="Number of bands">
         {BAND_OPTIONS.map((n) => (
@@ -71,68 +148,174 @@ export function ResistorWizard() {
       <ResistorGraphic bands={bands} bandCount={bandCount} />
 
       <div className="readout" aria-live="polite">
-        {result.ok ? (
+        {activeReadout.ok ? (
           <>
-            <p className="readout-value">{result.value.formattedValue}</p>
+            <p className="readout-value">{activeReadout.value.formattedValue}</p>
             <p className="readout-meta">
-              <span>{result.value.formattedTolerance}</span>
-              {result.value.formattedTempco ? (
+              <span>{activeReadout.value.formattedTolerance}</span>
+              {activeReadout.value.formattedTempco ? (
                 <>
                   <span className="readout-dot" aria-hidden="true">
                     ·
                   </span>
-                  <span>{result.value.formattedTempco}</span>
+                  <span>{activeReadout.value.formattedTempco}</span>
                 </>
               ) : null}
             </p>
+            {mode === 'encode' &&
+            'exact' in activeReadout.value &&
+            !activeReadout.value.exact ? (
+              <p className="readout-note">Nearest encodable value for this band count</p>
+            ) : null}
           </>
         ) : (
-          <p className="readout-error">{result.message}</p>
+          <p className="readout-error">{activeReadout.message}</p>
         )}
       </div>
 
-      <ol className="band-list">
-        {slots.map((slot, index) => {
-          const selected = bands[index]
-          return (
-            <li key={slot.key} className="band-row">
-              <div className="band-row-label">
-                <span className="band-index">{index + 1}</span>
-                <span>
-                  <span className="band-name">{slot.label}</span>
-                  <span className="band-selected">{COLORS[selected].label}</span>
-                </span>
-              </div>
-              <div
-                className="swatch-row"
-                role="radiogroup"
-                aria-label={`${slot.label} color`}
+      {mode === 'encode' ? (
+        <div className="encode-form">
+          <label className="field">
+            <span className="field-label">Resistance</span>
+            <input
+              className="field-input"
+              type="text"
+              inputMode="decimal"
+              autoCapitalize="off"
+              autoCorrect="off"
+              spellCheck={false}
+              placeholder="e.g. 4.7k"
+              value={encodeText}
+              onChange={(e) => setEncodeText(e.target.value)}
+              aria-describedby="encode-hint"
+            />
+            <span id="encode-hint" className="field-hint">
+              Use Ω / k / M suffixes — 4700, 4.7k, or 1M
+            </span>
+          </label>
+
+          <label className="field">
+            <span className="field-label">Tolerance</span>
+            <select
+              className="field-input"
+              value={encodeTolerance}
+              onChange={(e) => setEncodeTolerance(Number(e.target.value))}
+            >
+              {TOLERANCE_OPTIONS.map((opt) => (
+                <option key={opt.color} value={opt.value}>
+                  {opt.label} ({COLORS[opt.color].label})
+                </option>
+              ))}
+            </select>
+          </label>
+
+          {bandCount === 6 ? (
+            <label className="field">
+              <span className="field-label">Tempco</span>
+              <select
+                className="field-input"
+                value={encodeTempco}
+                onChange={(e) => setEncodeTempco(Number(e.target.value))}
               >
-                {slot.options.map((color) => {
-                  const def = COLORS[color]
-                  const isSelected = selected === color
-                  return (
-                    <button
-                      key={color}
-                      type="button"
-                      role="radio"
-                      aria-checked={isSelected}
-                      aria-label={def.label}
-                      title={def.label}
-                      className={`swatch${isSelected ? ' is-selected' : ''}`}
-                      style={{
-                        backgroundColor: def.hex,
-                        color: def.onHex,
-                      }}
-                      onClick={() => handleBandChange(index, color)}
-                    />
-                  )
-                })}
-              </div>
-            </li>
-          )
-        })}
-      </ol>
+                {TEMPCO_OPTIONS.map((opt) => (
+                  <option key={opt.color} value={opt.value}>
+                    {opt.label} ({COLORS[opt.color].label})
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+
+          {encodeResult.ok ? (
+            <ol className="encode-band-summary">
+              {slots.map((slot, index) => (
+                <li key={slot.key}>
+                  <span className="encode-band-index">{index + 1}</span>
+                  <span
+                    className="encode-band-swatch"
+                    style={{ backgroundColor: COLORS[encodeResult.value.bands[index]].hex }}
+                  />
+                  <span>
+                    {COLORS[encodeResult.value.bands[index]].label}
+                    <span className="encode-band-value">
+                      {' '}
+                      · {swatchValueLabel(slot.role, encodeResult.value.bands[index])}
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </ol>
+          ) : null}
+        </div>
+      ) : (
+        <ol className="band-list">
+          {slots.map((slot, index) => {
+            const selected = bands[index]
+            return (
+              <li key={slot.key} className="band-row">
+                <div className="band-row-label">
+                  <span className="band-index">{index + 1}</span>
+                  <span>
+                    <span className="band-name">{slot.label}</span>
+                    <span className="band-selected">
+                      {COLORS[selected].label} · {swatchValueLabel(slot.role, selected)}
+                    </span>
+                  </span>
+                </div>
+                <div
+                  className="swatch-row"
+                  role="radiogroup"
+                  aria-label={`${slot.label} color`}
+                >
+                  {slot.options.map((color) => {
+                    const def = COLORS[color]
+                    const isSelected = selected === color
+                    const valueLabel = swatchValueLabel(slot.role, color)
+                    return (
+                      <button
+                        key={color}
+                        type="button"
+                        role="radio"
+                        aria-checked={isSelected}
+                        aria-label={swatchAriaLabel(slot.role, color)}
+                        title={`${def.label} (${valueLabel})`}
+                        className={`swatch swatch-${slot.role}${isSelected ? ' is-selected' : ''}`}
+                        style={{
+                          backgroundColor: def.hex,
+                          color: def.onHex,
+                        }}
+                        onClick={() => handleBandChange(index, color)}
+                      >
+                        <span className="swatch-value">{valueLabel}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </li>
+            )
+          })}
+        </ol>
+      )}
     </section>
   )
+}
+
+function formatEncodePrefill(ohms: number): string {
+  if (ohms === 0) return '0'
+  if (ohms >= 1_000_000) {
+    const n = ohms / 1_000_000
+    return trimNum(n) + 'M'
+  }
+  if (ohms >= 1_000) {
+    const n = ohms / 1_000
+    return trimNum(n) + 'k'
+  }
+  return trimNum(ohms)
+}
+
+function trimNum(n: number): string {
+  const rounded = Number(n.toPrecision(6))
+  return Number.isInteger(rounded)
+    ? String(rounded)
+    : String(rounded).replace(/\.?0+$/, '')
 }

@@ -48,7 +48,7 @@ export default function App() {
                 onClick={() => setScreen('resistor')}
               >
                 <span className="tool-link-title">Resistor color code</span>
-                <span className="tool-link-desc">Decode 4 / 5 / 6 band stripes</span>
+                <span className="tool-link-desc">Encode or decode 4 / 5 / 6 band stripes</span>
               </button>
             </nav>
           </section>
