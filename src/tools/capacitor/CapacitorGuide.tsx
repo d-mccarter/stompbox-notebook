@@ -234,18 +234,18 @@ function PolarityCallout() {
       <rect x="115" y="12" width="50" height="72" rx="7" fill="#c5ccd3" />
       <rect x="115" y="12" width="12" height="72" fill="#1f1a14" />
 
+      <text x="8" y="46" className="cap-svg-label">
+        stripe
+      </text>
+      <text x="8" y="58" className="cap-svg-label">
+        = cathode (−)
+      </text>
       <path
-        d="M102 48 H84"
+        d="M78 48 H108"
         stroke="#2f6f62"
         strokeWidth="1.5"
         markerEnd="url(#arrow)"
       />
-      <text x="12" y="46" className="cap-svg-label">
-        printed stripe
-      </text>
-      <text x="12" y="58" className="cap-svg-label">
-        = cathode (−)
-      </text>
 
       <line x1="128" y1="84" x2="128" y2="108" stroke="#8a9299" strokeWidth="3" />
       <line x1="152" y1="84" x2="152" y2="108" stroke="#8a9299" strokeWidth="3" />
