@@ -1,0 +1,174 @@
+.app-shell {
+  position: relative;
+  min-height: 100dvh;
+  min-height: 100vh;
+  isolation: isolate;
+}
+
+.app-atmosphere {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(120% 80% at 8% -8%, rgba(47, 111, 98, 0.2), transparent 55%),
+    radial-gradient(90% 70% at 100% 5%, rgba(70, 110, 140, 0.16), transparent 50%),
+    linear-gradient(180deg, #eef3f6 0%, #e3eaef 50%, #d7e1e8 100%);
+}
+
+.app-atmosphere::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.4;
+  background-image:
+    linear-gradient(rgba(40, 70, 90, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(40, 70, 90, 0.045) 1px, transparent 1px);
+  background-size: 24px 24px;
+  pointer-events: none;
+}
+
+.app-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: max(0.65rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right))
+    0.35rem max(1rem, env(safe-area-inset-left));
+}
+
+.topbar-spacer {
+  width: 1px;
+  height: 1px;
+}
+
+.back-btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 0.45rem 0.15rem;
+  min-height: 2.5rem;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.build-badge {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: var(--ink-muted);
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.28rem 0.65rem;
+}
+
+.app-main {
+  width: min(100%, 34rem);
+  margin: 0 auto;
+  padding: 0.5rem max(1rem, env(safe-area-inset-right))
+    max(1.5rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+}
+
+.home {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding-top: 1.25rem;
+  animation: home-rise 420ms ease both;
+}
+
+.home-eyebrow {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--copper);
+}
+
+.brand {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(2.35rem, 11vw, 3.4rem);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 0.98;
+  color: var(--ink);
+}
+
+.home-lede {
+  margin: 0;
+  max-width: 28ch;
+  font-size: 1.02rem;
+  line-height: 1.45;
+  color: var(--ink-muted);
+}
+
+.tool-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.tool-link {
+  appearance: none;
+  width: 100%;
+  text-align: left;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.72);
+  padding: 1.05rem 1.1rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  transition:
+    transform 160ms ease,
+    background 160ms ease,
+    border-color 160ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tool-link:active {
+  transform: scale(0.985);
+}
+
+.tool-link-title {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.tool-link-desc {
+  font-size: 0.9rem;
+  color: var(--ink-muted);
+}
+
+@keyframes home-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .tool-link:hover {
+    border-color: var(--copper);
+    background: rgba(255, 255, 255, 0.92);
+  }
+
+  .band-count-btn:hover {
+    border-color: var(--copper);
+  }
+}
