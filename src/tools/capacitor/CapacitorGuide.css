@@ -54,8 +54,18 @@
 }
 
 .cap-type-art {
-  margin: 0 auto 0.35rem;
-  max-width: 12rem;
+  margin: 0 0 0.65rem;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background: #f3eee4;
+  aspect-ratio: 1;
+}
+
+.cap-type-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .cap-type-name {
