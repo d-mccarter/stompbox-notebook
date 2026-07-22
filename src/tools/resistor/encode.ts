@@ -135,6 +135,69 @@ export function parseResistanceInput(raw: string): number | null {
   return magnitude * factors[unit]
 }
 
+export type SiPrefixId = 'm' | 'none' | 'k' | 'M' | 'G'
+
+export interface SiPrefixOption {
+  id: SiPrefixId
+  label: string
+  factor: number
+}
+
+export const SI_PREFIX_OPTIONS: SiPrefixOption[] = [
+  { id: 'm', label: 'mΩ', factor: 0.001 },
+  { id: 'none', label: 'Ω', factor: 1 },
+  { id: 'k', label: 'kΩ', factor: 1_000 },
+  { id: 'M', label: 'MΩ', factor: 1_000_000 },
+  { id: 'G', label: 'GΩ', factor: 1_000_000_000 },
+]
+
+export function parseMagnitudeInput(raw: string): number | null {
+  const cleaned = raw.trim().replace(/\s+/g, '').replace(/,/g, '')
+  if (!cleaned) return null
+  const magnitude = Number(cleaned)
+  if (!Number.isFinite(magnitude) || magnitude < 0) return null
+  return magnitude
+}
+
+export function ohmsFromMagnitudeAndPrefix(
+  magnitudeText: string,
+  prefixId: SiPrefixId,
+): number | null {
+  const magnitude = parseMagnitudeInput(magnitudeText)
+  if (magnitude === null) return null
+  const prefix = SI_PREFIX_OPTIONS.find((p) => p.id === prefixId)
+  if (!prefix) return null
+  return magnitude * prefix.factor
+}
+
+/** Split ohms into a friendly magnitude + SI prefix for the encode fields. */
+export function splitOhmsForInput(ohms: number): {
+  magnitude: string
+  prefixId: SiPrefixId
+} {
+  if (!Number.isFinite(ohms) || ohms < 0) {
+    return { magnitude: '0', prefixId: 'none' }
+  }
+  if (ohms === 0) return { magnitude: '0', prefixId: 'none' }
+
+  // Prefer the largest prefix that keeps magnitude >= 1 when possible.
+  const preferred = [...SI_PREFIX_OPTIONS].reverse()
+  for (const prefix of preferred) {
+    const magnitude = ohms / prefix.factor
+    if (magnitude >= 1 || prefix.id === 'm') {
+      return { magnitude: trimMagnitude(magnitude), prefixId: prefix.id }
+    }
+  }
+  return { magnitude: trimMagnitude(ohms), prefixId: 'none' }
+}
+
+function trimMagnitude(n: number): string {
+  const rounded = Number(n.toPrecision(6))
+  return Number.isInteger(rounded)
+    ? String(rounded)
+    : String(rounded).replace(/\.?0+$/, '')
+}
+
 export function encodeResistor(
   input: EncodeInput,
   count: BandCount,

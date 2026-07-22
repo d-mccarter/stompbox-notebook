@@ -10,10 +10,13 @@ import { DecodeBoard } from './DecodeBoard'
 import { decodeResistor } from './decode'
 import {
   encodeResistor,
-  parseResistanceInput,
+  ohmsFromMagnitudeAndPrefix,
+  SI_PREFIX_OPTIONS,
+  splitOhmsForInput,
   swatchValueLabel,
   TEMPCO_OPTIONS,
   TOLERANCE_OPTIONS,
+  type SiPrefixId,
 } from './encode'
 import { ResistorGraphic } from './ResistorGraphic'
 import './ResistorWizard.css'
@@ -26,7 +29,8 @@ export function ResistorWizard() {
   const [bandCount, setBandCount] = useState<BandCount>(4)
   const [bands, setBands] = useState<BandColor[]>(() => defaultBands(4))
 
-  const [encodeText, setEncodeText] = useState('4.7k')
+  const [encodeMagnitude, setEncodeMagnitude] = useState('4.7')
+  const [encodePrefix, setEncodePrefix] = useState<SiPrefixId>('k')
   const [encodeTolerance, setEncodeTolerance] = useState(5)
   const [encodeTempco, setEncodeTempco] = useState(100)
 
@@ -44,9 +48,9 @@ export function ResistorWizard() {
   }, [bands, bandCount])
 
   const encodeResult = useMemo(() => {
-    const ohms = parseResistanceInput(encodeText)
+    const ohms = ohmsFromMagnitudeAndPrefix(encodeMagnitude, encodePrefix)
     if (ohms === null) {
-      return { ok: false as const, message: 'Enter a value like 4.7k, 4700, or 1M' }
+      return { ok: false as const, message: 'Enter a numeric resistance value' }
     }
     try {
       return {
@@ -66,7 +70,7 @@ export function ResistorWizard() {
         message: err instanceof Error ? err.message : 'Could not encode value',
       }
     }
-  }, [encodeText, encodeTolerance, encodeTempco, bandCount])
+  }, [encodeMagnitude, encodePrefix, encodeTolerance, encodeTempco, bandCount])
 
   useEffect(() => {
     if (mode !== 'encode') return
@@ -92,7 +96,9 @@ export function ResistorWizard() {
   function handleModeChange(next: WizardMode) {
     if (next === 'encode' && decodeResult.ok) {
       const { ohms, tolerancePercent, tempcoPpm } = decodeResult.value
-      setEncodeText(formatEncodePrefill(ohms))
+      const split = splitOhmsForInput(ohms)
+      setEncodeMagnitude(split.magnitude)
+      setEncodePrefix(split.prefixId)
       setEncodeTolerance(tolerancePercent)
       if (tempcoPpm !== null) setEncodeTempco(tempcoPpm)
     }
@@ -160,24 +166,41 @@ export function ResistorWizard() {
 
       {mode === 'encode' ? (
         <div className="encode-form">
-          <label className="field">
-            <span className="field-label">Resistance</span>
-            <input
-              className="field-input"
-              type="text"
-              inputMode="decimal"
-              autoCapitalize="off"
-              autoCorrect="off"
-              spellCheck={false}
-              placeholder="e.g. 4.7k"
-              value={encodeText}
-              onChange={(e) => setEncodeText(e.target.value)}
-              aria-describedby="encode-hint"
-            />
-            <span id="encode-hint" className="field-hint">
-              Use Ω / k / M suffixes — 4700, 4.7k, or 1M
+          <div className="field">
+            <span className="field-label" id="resistance-label">
+              Resistance
             </span>
-          </label>
+            <div className="resistance-row">
+              <input
+                className="field-input resistance-magnitude"
+                type="text"
+                inputMode="decimal"
+                autoCapitalize="off"
+                autoCorrect="off"
+                spellCheck={false}
+                placeholder="4.7"
+                value={encodeMagnitude}
+                onChange={(e) => setEncodeMagnitude(e.target.value)}
+                aria-labelledby="resistance-label"
+                aria-describedby="encode-hint"
+              />
+              <select
+                className="field-input resistance-prefix"
+                value={encodePrefix}
+                onChange={(e) => setEncodePrefix(e.target.value as SiPrefixId)}
+                aria-label="SI prefix"
+              >
+                {SI_PREFIX_OPTIONS.map((opt) => (
+                  <option key={opt.id} value={opt.id}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <span id="encode-hint" className="field-hint">
+              Enter the number, then choose mΩ / Ω / kΩ / MΩ / GΩ
+            </span>
+          </div>
 
           <label className="field">
             <span className="field-label">Tolerance</span>
@@ -277,22 +300,3 @@ function Readout({
   )
 }
 
-function formatEncodePrefill(ohms: number): string {
-  if (ohms === 0) return '0'
-  if (ohms >= 1_000_000) {
-    const n = ohms / 1_000_000
-    return trimNum(n) + 'M'
-  }
-  if (ohms >= 1_000) {
-    const n = ohms / 1_000
-    return trimNum(n) + 'k'
-  }
-  return trimNum(ohms)
-}
-
-function trimNum(n: number): string {
-  const rounded = Number(n.toPrecision(6))
-  return Number.isInteger(rounded)
-    ? String(rounded)
-    : String(rounded).replace(/\.?0+$/, '')
-}
