@@ -6,11 +6,11 @@ import {
   type BandColor,
   type BandCount,
 } from './colors'
+import { DecodeBoard } from './DecodeBoard'
 import { decodeResistor } from './decode'
 import {
   encodeResistor,
   parseResistanceInput,
-  swatchAriaLabel,
   swatchValueLabel,
   TEMPCO_OPTIONS,
   TOLERANCE_OPTIONS,
@@ -68,7 +68,6 @@ export function ResistorWizard() {
     }
   }, [encodeText, encodeTolerance, encodeTempco, bandCount])
 
-  // Keep the resistor graphic + shared band state in sync while encoding.
   useEffect(() => {
     if (mode !== 'encode') return
     if (!encodeResult.ok) return
@@ -92,7 +91,6 @@ export function ResistorWizard() {
 
   function handleModeChange(next: WizardMode) {
     if (next === 'encode' && decodeResult.ok) {
-      // Prefill encode fields from the current decoded bands.
       const { ohms, tolerancePercent, tempcoPpm } = decodeResult.value
       setEncodeText(formatEncodePrefill(ohms))
       setEncodeTolerance(tolerancePercent)
@@ -112,7 +110,7 @@ export function ResistorWizard() {
         </h1>
         <p className="wizard-lede">
           {mode === 'decode'
-            ? 'Pick band count, tap each stripe, read resistance and tolerance.'
+            ? 'Pick band count, tap a color in each column under its stripe.'
             : 'Enter a resistance, pick tolerance, and get the color bands.'}
         </p>
       </header>
@@ -145,7 +143,16 @@ export function ResistorWizard() {
         ))}
       </div>
 
-      <ResistorGraphic bands={bands} bandCount={bandCount} />
+      {mode === 'decode' ? (
+        <DecodeBoard
+          bands={bands}
+          bandCount={bandCount}
+          slots={slots}
+          onBandChange={handleBandChange}
+        />
+      ) : (
+        <ResistorGraphic bands={bands} bandCount={bandCount} />
+      )}
 
       <div className="readout" aria-live="polite">
         {activeReadout.ok ? (
@@ -247,55 +254,7 @@ export function ResistorWizard() {
             </ol>
           ) : null}
         </div>
-      ) : (
-        <ol className="band-list">
-          {slots.map((slot, index) => {
-            const selected = bands[index]
-            return (
-              <li key={slot.key} className="band-row">
-                <div className="band-row-label">
-                  <span className="band-index">{index + 1}</span>
-                  <span>
-                    <span className="band-name">{slot.label}</span>
-                    <span className="band-selected">
-                      {COLORS[selected].label} · {swatchValueLabel(slot.role, selected)}
-                    </span>
-                  </span>
-                </div>
-                <div
-                  className="swatch-row"
-                  role="radiogroup"
-                  aria-label={`${slot.label} color`}
-                >
-                  {slot.options.map((color) => {
-                    const def = COLORS[color]
-                    const isSelected = selected === color
-                    const valueLabel = swatchValueLabel(slot.role, color)
-                    return (
-                      <button
-                        key={color}
-                        type="button"
-                        role="radio"
-                        aria-checked={isSelected}
-                        aria-label={swatchAriaLabel(slot.role, color)}
-                        title={`${def.label} (${valueLabel})`}
-                        className={`swatch swatch-${slot.role}${isSelected ? ' is-selected' : ''}`}
-                        style={{
-                          backgroundColor: def.hex,
-                          color: def.onHex,
-                        }}
-                        onClick={() => handleBandChange(index, color)}
-                      >
-                        <span className="swatch-value">{valueLabel}</span>
-                      </button>
-                    )
-                  })}
-                </div>
-              </li>
-            )
-          })}
-        </ol>
-      )}
+      ) : null}
     </section>
   )
 }

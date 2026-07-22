@@ -1,27 +1,27 @@
 import { COLORS, type BandColor, type BandCount } from './colors'
+import { bandBodyPercents, RESISTOR_VIEW } from './layout'
 import './ResistorGraphic.css'
 
 interface ResistorGraphicProps {
   bands: BandColor[]
   bandCount: BandCount
+  /** Draw stub lines from each band down to the SVG bottom (for decode leaders). */
+  withLeaderStubs?: boolean
 }
 
-/** Band x positions as percentages of the body width (after lead inset). */
-function bandPositions(count: BandCount): number[] {
-  if (count === 4) return [18, 32, 46, 72]
-  if (count === 5) return [14, 26, 38, 50, 72]
-  return [12, 22, 32, 42, 62, 76]
-}
-
-export function ResistorGraphic({ bands, bandCount }: ResistorGraphicProps) {
-  const positions = bandPositions(bandCount)
-  const bodyY = 28
-  const bodyH = 44
+export function ResistorGraphic({
+  bands,
+  bandCount,
+  withLeaderStubs = false,
+}: ResistorGraphicProps) {
+  const positions = bandBodyPercents(bandCount)
+  const { width, height, bodyX, bodyY, bodyW, bodyH } = RESISTOR_VIEW
   const bandW = bandCount === 6 ? 7 : 8
+  const bandBottom = bodyY + bodyH - 2
 
   return (
     <div className="resistor-graphic" aria-hidden="true">
-      <svg viewBox="0 0 320 100" role="img" className="resistor-svg">
+      <svg viewBox={`0 0 ${width} ${height}`} role="img" className="resistor-svg">
         <defs>
           <linearGradient id="bodyGrad" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#d8c4a0" />
@@ -34,16 +34,30 @@ export function ResistorGraphic({ bands, bandCount }: ResistorGraphicProps) {
           </linearGradient>
         </defs>
 
-        {/* Leads */}
+        {withLeaderStubs
+          ? positions.map((p, i) => {
+              const x = bodyX + (p / 100) * bodyW
+              return (
+                <line
+                  key={`stub-${i}`}
+                  className="resistor-leader-stub"
+                  x1={x}
+                  y1={bandBottom}
+                  x2={x}
+                  y2={height}
+                />
+              )
+            })
+          : null}
+
         <rect x="8" y="46" width="42" height="8" rx="2" fill="url(#leadGrad)" />
         <rect x="270" y="46" width="42" height="8" rx="2" fill="url(#leadGrad)" />
 
-        {/* Body */}
-        <rect x="48" y={bodyY} width="224" height={bodyH} rx="18" fill="url(#bodyGrad)" />
+        <rect x={bodyX} y={bodyY} width={bodyW} height={bodyH} rx="18" fill="url(#bodyGrad)" />
         <rect
-          x="48"
+          x={bodyX}
           y={bodyY}
-          width="224"
+          width={bodyW}
           height={bodyH}
           rx="18"
           fill="none"
@@ -51,9 +65,8 @@ export function ResistorGraphic({ bands, bandCount }: ResistorGraphicProps) {
           strokeWidth="1"
         />
 
-        {/* Color bands */}
         {bands.slice(0, bandCount).map((color, i) => {
-          const x = 48 + (positions[i] / 100) * 224
+          const x = bodyX + (positions[i] / 100) * bodyW
           return (
             <rect
               key={`${i}-${color}`}

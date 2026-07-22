@@ -1,0 +1,162 @@
+.decode-board {
+  --board-max: 34rem;
+  width: min(100%, var(--board-max));
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.decode-board .resistor-graphic {
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  padding: 0.15rem 0 0;
+}
+
+.leader-lines {
+  display: block;
+  width: 100%;
+  height: 1.1rem;
+  overflow: visible;
+  margin: -0.35rem 0 0;
+}
+
+.leader-line {
+  stroke: rgba(30, 50, 60, 0.45);
+  stroke-width: 1.25;
+  stroke-dasharray: 3 3;
+}
+
+.band-columns {
+  position: relative;
+  width: 100%;
+  /* Tall enough for the longest swatch stack (multiplier = 12) + headers */
+  min-height: calc(2.2rem + 12 * 2.05rem + 1.6rem);
+  margin-top: 0.1rem;
+}
+
+.band-column {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  width: calc(100% / var(--band-count) - 0.15rem);
+  max-width: 3.4rem;
+}
+
+.band-column-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  min-height: 2.2rem;
+}
+
+.band-column-index {
+  display: inline-grid;
+  place-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+}
+
+.band-column-role {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+
+.swatch-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.28rem;
+}
+
+.decode-board .swatch {
+  width: 2.15rem;
+  height: 2.15rem;
+  min-width: 2.15rem;
+  border-radius: 0.45rem;
+}
+
+.decode-board .swatch-multiplier,
+.decode-board .swatch-tolerance,
+.decode-board .swatch-tempco {
+  width: 2.35rem;
+  min-width: 2.35rem;
+  height: 2.15rem;
+}
+
+.decode-board .swatch-value {
+  font-size: 0.52rem;
+}
+
+.decode-board .swatch-digit .swatch-value {
+  font-size: 0.78rem;
+}
+
+.band-column-selected {
+  margin: 0.15rem 0 0;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  line-height: 1.2;
+  text-align: center;
+  color: var(--ink-muted);
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 380px) {
+  .decode-board .swatch {
+    width: 1.9rem;
+    height: 1.9rem;
+    min-width: 1.9rem;
+  }
+
+  .decode-board .swatch-multiplier,
+  .decode-board .swatch-tolerance,
+  .decode-board .swatch-tempco {
+    width: 2.05rem;
+    min-width: 2.05rem;
+    height: 1.9rem;
+  }
+
+  .band-column {
+    max-width: 2.9rem;
+  }
+}
+
+@media (min-width: 720px) {
+  .decode-board .swatch {
+    width: 2.35rem;
+    height: 2.35rem;
+    min-width: 2.35rem;
+  }
+
+  .decode-board .swatch-multiplier,
+  .decode-board .swatch-tolerance,
+  .decode-board .swatch-tempco {
+    width: 2.6rem;
+    min-width: 2.6rem;
+  }
+
+  .decode-board .swatch-value {
+    font-size: 0.58rem;
+  }
+
+  .decode-board .swatch-digit .swatch-value {
+    font-size: 0.85rem;
+  }
+}
