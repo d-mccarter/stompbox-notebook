@@ -273,58 +273,138 @@ function LedSchematic() {
 
 function LedPolarityDiagram() {
   return (
-    <svg viewBox="0 0 320 150" className="led-schematic" role="img">
+    <svg
+      viewBox="0 0 280 136"
+      className="led-schematic"
+      role="img"
+      aria-label="Through-hole LED with flat cathode edge on the left and longer anode lead on the right"
+    >
       <title>Physical LED polarity: flat edge and lead length</title>
+      <defs>
+        <marker
+          id="led-arrow"
+          markerWidth="6"
+          markerHeight="6"
+          refX="5"
+          refY="3"
+          orient="auto"
+        >
+          <path d="M0,0 L6,3 L0,6 Z" fill="#2f6f62" />
+        </marker>
+        <linearGradient id="led-lens" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#e07468" stopOpacity="0.75" />
+          <stop offset="45%" stopColor="#c0392b" stopOpacity="0.88" />
+          <stop offset="100%" stopColor="#8e2a20" stopOpacity="0.95" />
+        </linearGradient>
+      </defs>
 
-      {/* LED body */}
+      {/* Single silhouette: dome, skirt, and flat cathode face on the left */}
       <path
-        d="M118 28
-           A42 42 0 0 1 198 70
-           L198 78
-           L118 78
-           L118 70
-           A42 42 0 0 1 118 28
+        d="M130 82
+           L130 52
+           C130 30 142 18 156 18
+           C170 18 182 30 182 52
+           L182 82
+           L186 82
+           L186 88
+           L126 88
+           L126 82
            Z"
-        fill="#c0392b"
-        fillOpacity="0.85"
+        fill="url(#led-lens)"
         stroke="#152028"
         strokeWidth="1.5"
+        strokeLinejoin="round"
       />
-      {/* Flat cathode edge on left */}
-      <line x1="118" y1="40" x2="118" y2="78" stroke="#152028" strokeWidth="3" />
+      {/* Emphasize the flat cathode face */}
+      <line
+        x1="128"
+        y1="50"
+        x2="128"
+        y2="88"
+        stroke="#152028"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
 
-      {/* Internal posts: small anode (right), large cathode flag (left) */}
-      <rect x="128" y="52" width="22" height="18" rx="1" fill="#b0b6bf" stroke="#152028" strokeWidth="1" />
-      <rect x="166" y="56" width="10" height="14" rx="1" fill="#d0d4d8" stroke="#152028" strokeWidth="1" />
-      <line x1="139" y1="70" x2="139" y2="78" stroke="#8a9299" strokeWidth="2" />
-      <line x1="171" y1="70" x2="171" y2="78" stroke="#8a9299" strokeWidth="2" />
+      {/* Internal posts: large cathode flag (left), small anode post (right) */}
+      <rect
+        x="134"
+        y="58"
+        width="20"
+        height="16"
+        rx="1"
+        fill="#b8bec6"
+        stroke="#152028"
+        strokeWidth="1"
+      />
+      <rect
+        x="166"
+        y="62"
+        width="8"
+        height="14"
+        rx="1"
+        fill="#d0d4d8"
+        stroke="#152028"
+        strokeWidth="1"
+      />
 
       {/* Leads: short cathode left, long anode right */}
-      <line x1="139" y1="78" x2="139" y2="112" stroke="#8a9299" strokeWidth="3" />
-      <line x1="171" y1="78" x2="171" y2="132" stroke="#8a9299" strokeWidth="3" />
+      <line
+        x1="144"
+        y1="74"
+        x2="144"
+        y2="108"
+        stroke="#8a9299"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+      <line
+        x1="170"
+        y1="76"
+        x2="170"
+        y2="118"
+        stroke="#8a9299"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
 
-      {/* Callouts */}
-      <path d="M108 55 H72" stroke="#2f6f62" strokeWidth="1.5" />
-      <text x="8" y="50" className="sch-label">
+      {/* Flat-edge callout — same pattern as the capacitor stripe callout */}
+      <text x="8" y="46" className="sch-label">
         flat edge
       </text>
-      <text x="8" y="64" className="sch-sub">
-        cathode (−)
+      <text x="8" y="58" className="sch-label">
+        = cathode (−)
       </text>
+      <path
+        d="M78 48 H120"
+        stroke="#2f6f62"
+        strokeWidth="1.5"
+        markerEnd="url(#led-arrow)"
+      />
 
-      <text x="139" y="146" textAnchor="middle" className="sch-sub">
-        short (−)
+      {/* Lead labels offset outward so they stay clear of the pins */}
+      <text x="98" y="122" textAnchor="end" className="sch-label">
+        − cathode
       </text>
-      <text x="171" y="146" textAnchor="middle" className="sch-sub">
-        long (+)
+      <text x="208" y="122" textAnchor="start" className="sch-label">
+        + anode
       </text>
-      <text x="210" y="100" className="sch-label">
-        longer lead
-      </text>
-      <text x="210" y="114" className="sch-sub">
-        anode (+)
-      </text>
-      <path d="M200 108 H178" stroke="#2f6f62" strokeWidth="1.5" />
+      <line
+        x1="102"
+        y1="118"
+        x2="138"
+        y2="110"
+        stroke="#8a9299"
+        strokeWidth="1"
+      />
+      <line
+        x1="204"
+        y1="118"
+        x2="176"
+        y2="114"
+        stroke="#8a9299"
+        strokeWidth="1"
+      />
     </svg>
   )
 }
