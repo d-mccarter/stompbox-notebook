@@ -5,19 +5,12 @@ import './ResistorGraphic.css'
 interface ResistorGraphicProps {
   bands: BandColor[]
   bandCount: BandCount
-  /** Draw stub lines from each band down to the SVG bottom (for decode leaders). */
-  withLeaderStubs?: boolean
 }
 
-export function ResistorGraphic({
-  bands,
-  bandCount,
-  withLeaderStubs = false,
-}: ResistorGraphicProps) {
+export function ResistorGraphic({ bands, bandCount }: ResistorGraphicProps) {
   const positions = bandBodyPercents(bandCount)
   const { width, height, bodyX, bodyY, bodyW, bodyH } = RESISTOR_VIEW
   const bandW = bandCount === 6 ? 7 : 8
-  const bandBottom = bodyY + bodyH - 2
 
   return (
     <div className="resistor-graphic" aria-hidden="true">
@@ -33,22 +26,6 @@ export function ResistorGraphic({
             <stop offset="100%" stopColor="#8a9299" />
           </linearGradient>
         </defs>
-
-        {withLeaderStubs
-          ? positions.map((p, i) => {
-              const x = bodyX + (p / 100) * bodyW
-              return (
-                <line
-                  key={`stub-${i}`}
-                  className="resistor-leader-stub"
-                  x1={x}
-                  y1={bandBottom}
-                  x2={x}
-                  y2={height}
-                />
-              )
-            })
-          : null}
 
         <rect x="8" y="46" width="42" height="8" rx="2" fill="url(#leadGrad)" />
         <rect x="270" y="46" width="42" height="8" rx="2" fill="url(#leadGrad)" />
