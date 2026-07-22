@@ -36,8 +36,8 @@ export function LedNotes() {
           Current limiter
         </h1>
         <p className="led-notes-lede">
-          Series resistor math for pedal indicator LEDs — schematic, typical
-          values by color, and a quick calculator.
+          Series resistor math for pedal indicator LEDs — polarity marks,
+          schematic, typical values by color, and a quick calculator.
         </p>
       </header>
 
@@ -58,6 +58,34 @@ export function LedNotes() {
           The resistor drops the leftover voltage so LED current stays in a safe
           range. For 9 V pedals, 5–15 mA is typical for a panel LED.
         </p>
+      </section>
+
+      <section className="led-polarity-block" aria-labelledby="led-polarity-title">
+        <h2 id="led-polarity-title" className="led-section-title">
+          Finding anode &amp; cathode
+        </h2>
+        <div className="led-polarity-wrap" aria-hidden="true">
+          <LedPolarityDiagram />
+        </div>
+        <ul className="led-polarity-list">
+          <li>
+            <strong>Longer lead = anode (+).</strong> On a new LED the anode
+            lead sticks out farther than the cathode.
+          </li>
+          <li>
+            <strong>Flat edge = cathode (−).</strong> Look at the epoxy lens
+            from above — the flattened rim sits on the cathode side.
+          </li>
+          <li>
+            <strong>Inside the package:</strong> the larger metal “flag” or
+            anvil is usually the cathode; the smaller post is the anode.
+          </li>
+          <li>
+            <strong>Leads already trimmed?</strong> Use the flat on the body,
+            or check continuity with a multimeter’s diode mode (it lights /
+            reads when red probe is on the anode).
+          </li>
+        </ul>
       </section>
 
       <section className="led-table-block" aria-labelledby="led-table-title">
@@ -239,6 +267,64 @@ function LedSchematic() {
       <text x="160" y="112" textAnchor="middle" className="sch-sub">
         I through R and LED
       </text>
+    </svg>
+  )
+}
+
+function LedPolarityDiagram() {
+  return (
+    <svg viewBox="0 0 320 150" className="led-schematic" role="img">
+      <title>Physical LED polarity: flat edge and lead length</title>
+
+      {/* LED body */}
+      <path
+        d="M118 28
+           A42 42 0 0 1 198 70
+           L198 78
+           L118 78
+           L118 70
+           A42 42 0 0 1 118 28
+           Z"
+        fill="#c0392b"
+        fillOpacity="0.85"
+        stroke="#152028"
+        strokeWidth="1.5"
+      />
+      {/* Flat cathode edge on left */}
+      <line x1="118" y1="40" x2="118" y2="78" stroke="#152028" strokeWidth="3" />
+
+      {/* Internal posts: small anode (right), large cathode flag (left) */}
+      <rect x="128" y="52" width="22" height="18" rx="1" fill="#b0b6bf" stroke="#152028" strokeWidth="1" />
+      <rect x="166" y="56" width="10" height="14" rx="1" fill="#d0d4d8" stroke="#152028" strokeWidth="1" />
+      <line x1="139" y1="70" x2="139" y2="78" stroke="#8a9299" strokeWidth="2" />
+      <line x1="171" y1="70" x2="171" y2="78" stroke="#8a9299" strokeWidth="2" />
+
+      {/* Leads: short cathode left, long anode right */}
+      <line x1="139" y1="78" x2="139" y2="112" stroke="#8a9299" strokeWidth="3" />
+      <line x1="171" y1="78" x2="171" y2="132" stroke="#8a9299" strokeWidth="3" />
+
+      {/* Callouts */}
+      <path d="M108 55 H72" stroke="#2f6f62" strokeWidth="1.5" />
+      <text x="8" y="50" className="sch-label">
+        flat edge
+      </text>
+      <text x="8" y="64" className="sch-sub">
+        cathode (−)
+      </text>
+
+      <text x="139" y="146" textAnchor="middle" className="sch-sub">
+        short (−)
+      </text>
+      <text x="171" y="146" textAnchor="middle" className="sch-sub">
+        long (+)
+      </text>
+      <text x="210" y="100" className="sch-label">
+        longer lead
+      </text>
+      <text x="210" y="114" className="sch-sub">
+        anode (+)
+      </text>
+      <path d="M200 108 H178" stroke="#2f6f62" strokeWidth="1.5" />
     </svg>
   )
 }
