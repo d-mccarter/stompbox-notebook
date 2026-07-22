@@ -1,0 +1,209 @@
+.cap-guide {
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
+  padding: 0.25rem 0 0.5rem;
+  border-top: 1.5px solid var(--line);
+  margin-top: 0.35rem;
+  padding-top: 1.35rem;
+}
+
+.cap-guide-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.cap-guide-title,
+.cap-section-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.cap-guide-title {
+  font-size: 1.35rem;
+}
+
+.cap-section-title {
+  font-size: 1.1rem;
+  margin-bottom: 0.65rem;
+}
+
+.cap-guide-lede {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 0.95rem;
+  line-height: 1.45;
+  max-width: 34ch;
+}
+
+.cap-type-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.cap-type-card {
+  border: 1.5px solid var(--line);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.72);
+  padding: 0.85rem 0.9rem 1rem;
+}
+
+.cap-type-art {
+  margin: 0 auto 0.35rem;
+  max-width: 12rem;
+}
+
+.cap-type-name {
+  margin: 0 0 0.55rem;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.cap-type-meta {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.cap-type-meta div {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr);
+  gap: 0.45rem;
+}
+
+.cap-type-meta dt {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.cap-type-meta dd {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.cap-symbols,
+.cap-polarity,
+.cap-cheat {
+  display: flex;
+  flex-direction: column;
+}
+
+.cap-symbol-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.cap-symbol {
+  margin: 0;
+  border: 1.5px solid var(--line);
+  border-radius: 0.85rem;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 0.65rem;
+  text-align: center;
+  color: var(--ink);
+}
+
+.cap-symbol figcaption {
+  margin-top: 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--ink-muted);
+}
+
+.cap-symbol-note,
+.cap-polarity-list {
+  margin: 0.75rem 0 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--ink-muted);
+}
+
+.cap-polarity-list {
+  padding-left: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.cap-polarity-list strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.cap-polarity-art {
+  max-width: 18rem;
+  margin: 0 auto 0.35rem;
+}
+
+.cap-cheat-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.cap-cheat-table th,
+.cap-cheat-table td {
+  text-align: left;
+  padding: 0.55rem 0.4rem;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+.cap-cheat-table th {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  font-weight: 500;
+}
+
+.cap-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.cap-svg.symbol {
+  max-width: 7.5rem;
+  margin: 0 auto;
+}
+
+.cap-svg-mark {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  fill: #1f1a14;
+}
+
+.cap-svg-mark.light {
+  fill: #f7f1e6;
+}
+
+.cap-svg-mark.dark {
+  fill: #152028;
+  font-size: 11px;
+}
+
+.cap-svg-tiny {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  fill: #4a5a66;
+}
+
+.cap-svg-tiny.light {
+  fill: #f7f1e6;
+}
