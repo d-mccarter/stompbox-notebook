@@ -6,6 +6,7 @@ Mobile-first DIY guitar pedal reference tools. First tool: **resistor color code
 
 - **Resistor color code** — encode/decode 4 / 5 / 6 band resistors
 - **Capacitor codes** — EIA marking decode/encode plus a stompbox polarity & usage guide
+- **LED limiter** — series resistor schematic, typical values by color, and calculator
 
 
 https://d-mccarter.github.io/stompbox-notebook/

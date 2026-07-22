@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { CapacitorWizard } from './tools/capacitor/CapacitorWizard'
+import { LedNotes } from './tools/led/LedNotes'
 import { ResistorWizard } from './tools/resistor/ResistorWizard'
 import './App.css'
 
-type Screen = 'home' | 'resistor' | 'capacitor'
+type Screen = 'home' | 'resistor' | 'capacitor' | 'led'
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('home')
@@ -67,12 +68,24 @@ export default function App() {
                   Decode markings, polarity, and pedal uses
                 </span>
               </button>
+              <button
+                type="button"
+                className="tool-link"
+                onClick={() => setScreen('led')}
+              >
+                <span className="tool-link-title">LED limiter</span>
+                <span className="tool-link-desc">
+                  Schematic, color table, and resistor calculator
+                </span>
+              </button>
             </nav>
           </section>
         ) : screen === 'resistor' ? (
           <ResistorWizard />
-        ) : (
+        ) : screen === 'capacitor' ? (
           <CapacitorWizard />
+        ) : (
+          <LedNotes />
         )}
       </main>
     </div>
