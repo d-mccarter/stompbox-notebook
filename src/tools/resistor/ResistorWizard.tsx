@@ -149,36 +149,14 @@ export function ResistorWizard() {
           bandCount={bandCount}
           slots={slots}
           onBandChange={handleBandChange}
+          readout={<Readout result={activeReadout} mode={mode} />}
         />
       ) : (
-        <ResistorGraphic bands={bands} bandCount={bandCount} />
+        <>
+          <ResistorGraphic bands={bands} bandCount={bandCount} />
+          <Readout result={activeReadout} mode={mode} />
+        </>
       )}
-
-      <div className="readout" aria-live="polite">
-        {activeReadout.ok ? (
-          <>
-            <p className="readout-value">{activeReadout.value.formattedValue}</p>
-            <p className="readout-meta">
-              <span>{activeReadout.value.formattedTolerance}</span>
-              {activeReadout.value.formattedTempco ? (
-                <>
-                  <span className="readout-dot" aria-hidden="true">
-                    ·
-                  </span>
-                  <span>{activeReadout.value.formattedTempco}</span>
-                </>
-              ) : null}
-            </p>
-            {mode === 'encode' &&
-            'exact' in activeReadout.value &&
-            !activeReadout.value.exact ? (
-              <p className="readout-note">Nearest encodable value for this band count</p>
-            ) : null}
-          </>
-        ) : (
-          <p className="readout-error">{activeReadout.message}</p>
-        )}
-      </div>
 
       {mode === 'encode' ? (
         <div className="encode-form">
@@ -256,6 +234,46 @@ export function ResistorWizard() {
         </div>
       ) : null}
     </section>
+  )
+}
+
+type ReadoutResult =
+  | { ok: true; value: { formattedValue: string; formattedTolerance: string; formattedTempco: string | null; exact?: boolean } }
+  | { ok: false; message: string }
+
+function Readout({
+  result,
+  mode,
+}: {
+  result: ReadoutResult
+  mode: WizardMode
+}) {
+  return (
+    <div className="readout" aria-live="polite">
+      {result.ok ? (
+        <>
+          <p className="readout-value">{result.value.formattedValue}</p>
+          <p className="readout-meta">
+            <span>{result.value.formattedTolerance}</span>
+            {result.value.formattedTempco ? (
+              <>
+                <span className="readout-dot" aria-hidden="true">
+                  ·
+                </span>
+                <span>{result.value.formattedTempco}</span>
+              </>
+            ) : null}
+          </p>
+          {mode === 'encode' &&
+          'exact' in result.value &&
+          result.value.exact === false ? (
+            <p className="readout-note">Nearest encodable value for this band count</p>
+          ) : null}
+        </>
+      ) : (
+        <p className="readout-error">{result.message}</p>
+      )}
+    </div>
   )
 }
 
