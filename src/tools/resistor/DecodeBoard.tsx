@@ -42,6 +42,11 @@ export function DecodeBoard({
 
   const bandCenters = useMemo(() => bandCenterPercents(bandCount), [bandCount])
 
+  const colorSummary = useMemo(
+    () => formatSelectedColors(bands, bandCount),
+    [bands, bandCount],
+  )
+
   useLayoutEffect(() => {
     const stage = stageRef.current
     const resistor = resistorRef.current
@@ -103,6 +108,10 @@ export function DecodeBoard({
   return (
     <div className="decode-board">
       {readout ? <div className="decode-readout-slot">{readout}</div> : null}
+
+      <p className="color-summary" aria-live="polite">
+        {colorSummary}
+      </p>
 
       <div className="decode-link-stage" ref={stageRef}>
         <svg
@@ -174,7 +183,6 @@ export function DecodeBoard({
                     )
                   })}
                 </div>
-                <p className="band-column-selected">{COLORS[selected].label}</p>
               </div>
             )
           })}
@@ -182,6 +190,19 @@ export function DecodeBoard({
       </div>
     </div>
   )
+}
+
+/** e.g. Brown-Black-Black [Gold] — value bands hyphenated, tolerance in brackets. */
+function formatSelectedColors(bands: BandColor[], count: BandCount): string {
+  const tolIndex = count === 4 ? 3 : 4
+  const valueBands = bands.slice(0, tolIndex)
+  const valueNames = valueBands.map((c) => COLORS[c].label)
+  const tolName = COLORS[bands[tolIndex]].label
+  let text = `${valueNames.join('-')} [${tolName}]`
+  if (count === 6) {
+    text += ` ${COLORS[bands[5]].label}`
+  }
+  return text
 }
 
 function shortRole(label: string): string {
