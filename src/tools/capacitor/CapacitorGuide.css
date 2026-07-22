@@ -217,3 +217,9 @@
 .cap-svg-tiny.light {
   fill: #f7f1e6;
 }
+
+.cap-svg-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  fill: #4a5a66;
+}
