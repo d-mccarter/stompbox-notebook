@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { CapacitorWizard } from './tools/capacitor/CapacitorWizard'
 import { LedNotes } from './tools/led/LedNotes'
+import { OffboardWiring } from './tools/offboard/OffboardWiring'
 import { ResistorWizard } from './tools/resistor/ResistorWizard'
 import './App.css'
 
-type Screen = 'home' | 'resistor' | 'capacitor' | 'led'
+type Screen = 'home' | 'resistor' | 'capacitor' | 'led' | 'offboard'
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('home')
@@ -78,14 +79,26 @@ export default function App() {
                   Schematic, color table, and resistor calculator
                 </span>
               </button>
+              <button
+                type="button"
+                className="tool-link"
+                onClick={() => setScreen('offboard')}
+              >
+                <span className="tool-link-title">Offboard wiring</span>
+                <span className="tool-link-desc">
+                  Jacks, 3PDT, dual builds, pots, and level trim
+                </span>
+              </button>
             </nav>
           </section>
         ) : screen === 'resistor' ? (
           <ResistorWizard />
         ) : screen === 'capacitor' ? (
           <CapacitorWizard />
-        ) : (
+        ) : screen === 'led' ? (
           <LedNotes />
+        ) : (
+          <OffboardWiring />
         )}
       </main>
     </div>
