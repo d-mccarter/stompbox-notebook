@@ -1,9 +1,13 @@
 import './CapacitorGuide.css'
 
+const asset = (file: string) => `${import.meta.env.BASE_URL}capacitor/${file}`
+
 const TYPES = [
   {
     id: 'ceramic',
     title: 'Ceramic disc',
+    image: 'ceramic-disc.jpg',
+    imageAlt: 'Ceramic disc capacitor marked 104 with two radial leads',
     polarity: 'Non-polarized',
     range: '1 pF – ~1 µF (often 10 pF – 100 nF on pedals)',
     uses: 'High-frequency rolloff, RF snubbing, tiny coupling, power-pin bypass next to ICs/op-amps.',
@@ -12,6 +16,8 @@ const TYPES = [
   {
     id: 'film',
     title: 'Film (polyester / polypropylene)',
+    image: 'film-cap.jpg',
+    imageAlt: 'Green box film capacitor marked 100nJ 100V with two radial leads',
     polarity: 'Non-polarized',
     range: '~1 nF – a few µF',
     uses: 'Tone stacks, coupling, timing, and filter caps where low distortion matters.',
@@ -20,6 +26,9 @@ const TYPES = [
   {
     id: 'electrolytic',
     title: 'Electrolytic (aluminum)',
+    image: 'electrolytic.jpg',
+    imageAlt:
+      'Aluminum electrolytic capacitor marked 10µF 25V with cathode stripe and radial leads',
     polarity: 'Polarized — observe anode (+)',
     range: '~1 µF – thousands of µF',
     uses: 'Power supply filtering, large AC coupling, bias bypass on emitters/cathodes.',
@@ -28,6 +37,8 @@ const TYPES = [
   {
     id: 'tantalum',
     title: 'Tantalum',
+    image: 'tantalum.jpg',
+    imageAlt: 'Orange dipped tantalum capacitor marked + 1.0µF 16V with two radial leads',
     polarity: 'Polarized — observe anode (+)',
     range: '~0.1 µF – tens of µF',
     uses: 'Compact polarized bypass/coupling where board space is tight.',
@@ -51,11 +62,15 @@ export function CapacitorGuide() {
       <div className="cap-type-grid">
         {TYPES.map((type) => (
           <article key={type.id} className="cap-type-card">
-            <div className="cap-type-art" aria-hidden="true">
-              {type.id === 'ceramic' ? <CeramicArt /> : null}
-              {type.id === 'film' ? <FilmArt /> : null}
-              {type.id === 'electrolytic' ? <ElectrolyticArt /> : null}
-              {type.id === 'tantalum' ? <TantalumArt /> : null}
+            <div className="cap-type-art">
+              <img
+                className="cap-type-img"
+                src={asset(type.image)}
+                alt={type.imageAlt}
+                loading="lazy"
+                width={640}
+                height={640}
+              />
             </div>
             <h3 className="cap-type-name">{type.title}</h3>
             <dl className="cap-type-meta">
@@ -169,74 +184,6 @@ export function CapacitorGuide() {
         </table>
       </section>
     </section>
-  )
-}
-
-function CeramicArt() {
-  return (
-    <svg viewBox="0 0 160 100" className="cap-svg" role="img">
-      <ellipse cx="80" cy="48" rx="36" ry="28" fill="#c4a574" stroke="#6b5230" />
-      <ellipse cx="80" cy="48" rx="28" ry="20" fill="#d8b88a" />
-      <text x="80" y="52" textAnchor="middle" className="cap-svg-mark">
-        104
-      </text>
-      <line x1="20" y1="48" x2="44" y2="48" stroke="#8a9299" strokeWidth="3" />
-      <line x1="116" y1="48" x2="140" y2="48" stroke="#8a9299" strokeWidth="3" />
-    </svg>
-  )
-}
-
-function FilmArt() {
-  return (
-    <svg viewBox="0 0 160 100" className="cap-svg" role="img">
-      <rect x="48" y="28" width="64" height="44" rx="4" fill="#2f6f62" />
-      <rect x="52" y="32" width="56" height="36" rx="2" fill="#3d8a7a" />
-      <text x="80" y="54" textAnchor="middle" className="cap-svg-mark light">
-        100n
-      </text>
-      <line x1="20" y1="50" x2="48" y2="50" stroke="#8a9299" strokeWidth="3" />
-      <line x1="112" y1="50" x2="140" y2="50" stroke="#8a9299" strokeWidth="3" />
-    </svg>
-  )
-}
-
-function ElectrolyticArt() {
-  return (
-    <svg viewBox="0 0 160 110" className="cap-svg" role="img">
-      <rect x="58" y="18" width="44" height="58" rx="6" fill="#c5ccd3" />
-      <rect x="58" y="18" width="10" height="58" fill="#1f1a14" />
-      <text x="88" y="48" textAnchor="middle" className="cap-svg-mark dark">
-        10µF
-      </text>
-      <text x="63" y="70" className="cap-svg-tiny light">
-        −
-      </text>
-      <line x1="70" y1="76" x2="70" y2="98" stroke="#8a9299" strokeWidth="3" />
-      <line x1="90" y1="76" x2="90" y2="98" stroke="#8a9299" strokeWidth="3" />
-      <text x="70" y="108" textAnchor="middle" className="cap-svg-tiny">
-        −
-      </text>
-      <text x="90" y="108" textAnchor="middle" className="cap-svg-tiny">
-        +
-      </text>
-    </svg>
-  )
-}
-
-function TantalumArt() {
-  return (
-    <svg viewBox="0 0 160 100" className="cap-svg" role="img">
-      <rect x="55" y="34" width="50" height="32" rx="3" fill="#c0392b" />
-      <rect x="55" y="34" width="10" height="32" fill="#1f1a14" />
-      <text x="88" y="54" textAnchor="middle" className="cap-svg-mark light">
-        1µ
-      </text>
-      <text x="60" y="54" className="cap-svg-tiny light">
-        +
-      </text>
-      <line x1="20" y1="50" x2="55" y2="50" stroke="#8a9299" strokeWidth="3" />
-      <line x1="105" y1="50" x2="140" y2="50" stroke="#8a9299" strokeWidth="3" />
-    </svg>
   )
 }
 
