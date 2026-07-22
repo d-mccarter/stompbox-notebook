@@ -48,10 +48,35 @@
 }
 
 .led-schematic-block,
+.led-polarity-block,
 .led-table-block,
 .led-calc-block {
   display: flex;
   flex-direction: column;
+}
+
+.led-polarity-wrap {
+  border: 1.5px solid var(--line);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.78);
+  padding: 0.75rem 0.5rem;
+  margin-bottom: 0.65rem;
+}
+
+.led-polarity-list {
+  margin: 0;
+  padding-left: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--ink-muted);
+}
+
+.led-polarity-list strong {
+  color: var(--ink);
+  font-weight: 600;
 }
 
 .led-schematic-wrap {
