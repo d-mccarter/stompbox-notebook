@@ -219,37 +219,59 @@ function PolarSymbol() {
 
 function PolarityCallout() {
   return (
-    <svg viewBox="0 0 280 120" className="cap-svg" role="img">
-      <rect x="100" y="16" width="50" height="70" rx="7" fill="#c5ccd3" />
-      <rect x="100" y="16" width="12" height="70" fill="#1f1a14" />
-      <text x="118" y="40" className="cap-svg-tiny light">
-        stripe
-      </text>
-      <text x="118" y="54" className="cap-svg-tiny light">
-        = cathode
-      </text>
-      <line x1="114" y1="86" x2="114" y2="108" stroke="#8a9299" strokeWidth="3" />
-      <line x1="136" y1="86" x2="136" y2="108" stroke="#8a9299" strokeWidth="3" />
-      <text x="114" y="118" textAnchor="middle" className="cap-svg-tiny">
-        − cathode
-      </text>
-      <text x="136" y="118" textAnchor="middle" className="cap-svg-tiny">
-        + anode
-      </text>
-      <path
-        d="M88 50 H70"
-        stroke="#2f6f62"
-        strokeWidth="1.5"
-        markerEnd="url(#arrow)"
-      />
+    <svg
+      viewBox="0 0 280 136"
+      className="cap-svg"
+      role="img"
+      aria-label="Electrolytic capacitor with cathode stripe on the left lead and anode on the right"
+    >
       <defs>
         <marker id="arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
           <path d="M0,0 L6,3 L0,6 Z" fill="#2f6f62" />
         </marker>
       </defs>
-      <text x="18" y="54" className="cap-svg-tiny">
-        band / stripe
+
+      <rect x="115" y="12" width="50" height="72" rx="7" fill="#c5ccd3" />
+      <rect x="115" y="12" width="12" height="72" fill="#1f1a14" />
+
+      <path
+        d="M102 48 H84"
+        stroke="#2f6f62"
+        strokeWidth="1.5"
+        markerEnd="url(#arrow)"
+      />
+      <text x="12" y="46" className="cap-svg-label">
+        printed stripe
       </text>
+      <text x="12" y="58" className="cap-svg-label">
+        = cathode (−)
+      </text>
+
+      <line x1="128" y1="84" x2="128" y2="108" stroke="#8a9299" strokeWidth="3" />
+      <line x1="152" y1="84" x2="152" y2="108" stroke="#8a9299" strokeWidth="3" />
+
+      <text x="98" y="122" textAnchor="end" className="cap-svg-label">
+        − cathode
+      </text>
+      <text x="182" y="122" textAnchor="start" className="cap-svg-label">
+        + anode
+      </text>
+      <line
+        x1="102"
+        y1="118"
+        x2="122"
+        y2="110"
+        stroke="#8a9299"
+        strokeWidth="1"
+      />
+      <line
+        x1="178"
+        y1="118"
+        x2="158"
+        y2="110"
+        stroke="#8a9299"
+        strokeWidth="1"
+      />
     </svg>
   )
 }
