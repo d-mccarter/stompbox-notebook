@@ -1,0 +1,49 @@
+:root {
+  --font-display: 'Syne', 'Avenir Next Condensed', 'Arial Narrow', sans-serif;
+  --font-body: 'Source Sans 3', 'Source Sans Pro', 'Gill Sans', sans-serif;
+  --font-mono: 'IBM Plex Mono', 'SFMono-Regular', Menlo, monospace;
+
+  --paper: #e9eef2;
+  --ink: #152028;
+  --ink-muted: #4a5a66;
+  --copper: #2f6f62;
+  --line: rgba(30, 50, 60, 0.14);
+  --line-strong: rgba(30, 50, 60, 0.28);
+
+  color: var(--ink);
+  background: var(--paper);
+  font-family: var(--font-body);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  min-width: 320px;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--copper);
+  outline-offset: 2px;
+}
