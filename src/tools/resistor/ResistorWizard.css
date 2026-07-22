@@ -169,6 +169,17 @@
   color: var(--ink-muted);
 }
 
+.resistance-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 6.5rem;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.resistance-prefix {
+  padding-right: 0.65rem;
+}
+
 .encode-band-summary {
   list-style: none;
   margin: 0.25rem 0 0;
