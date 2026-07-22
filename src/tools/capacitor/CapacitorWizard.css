@@ -1,0 +1,189 @@
+.cap-wizard {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  padding: 0.25rem 0 2rem;
+}
+
+.cap-wizard-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.cap-wizard-kicker {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--copper);
+}
+
+.cap-wizard-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.65rem, 6vw, 2.1rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: var(--ink);
+}
+
+.cap-wizard-lede {
+  margin: 0;
+  max-width: 34ch;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: var(--ink-muted);
+}
+
+.cap-wizard .mode-toggle {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+
+.cap-wizard .mode-btn {
+  appearance: none;
+  border: 1.5px solid var(--line);
+  border-radius: 0.65rem;
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  font-weight: 600;
+  padding: 0.7rem 0.5rem;
+  min-height: 2.75rem;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.cap-wizard .mode-btn.is-active {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+
+.cap-wizard .field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.cap-wizard .field-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.cap-wizard .field-input {
+  appearance: none;
+  width: 100%;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  padding: 0.85rem 0.95rem;
+  min-height: 3rem;
+}
+
+.cap-wizard .field-input:focus {
+  outline: 2px solid var(--copper);
+  outline-offset: 1px;
+  border-color: transparent;
+}
+
+.cap-wizard .field-hint {
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+}
+
+.cap-value-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 5.5rem;
+  gap: 0.5rem;
+}
+
+.cap-readout {
+  text-align: center;
+  padding: 0.25rem 0;
+}
+
+.cap-readout-value {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: clamp(1.85rem, 8vw, 2.4rem);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+
+.cap-readout-meta {
+  margin: 0.35rem 0 0;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  color: var(--ink-muted);
+  display: flex;
+  justify-content: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.cap-readout-dot {
+  opacity: 0.5;
+}
+
+.cap-readout-note {
+  margin: 0.4rem 0 0;
+  font-size: 0.82rem;
+  color: var(--ink-muted);
+}
+
+.cap-readout-error {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #9b2c2c;
+}
+
+.cap-examples {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.45rem;
+}
+
+.cap-example {
+  appearance: none;
+  border: 1.5px solid var(--line);
+  border-radius: 0.7rem;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 0.55rem 0.35rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  align-items: center;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.cap-example-code {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+
+.cap-example-value {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--ink-muted);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .cap-wizard .mode-btn:hover,
+  .cap-example:hover {
+    border-color: var(--copper);
+  }
+}
