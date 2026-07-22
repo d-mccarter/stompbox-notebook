@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ResistorWizard } from './tools/resistor/ResistorWizard'
 import './App.css'
 
@@ -6,6 +6,10 @@ type Screen = 'home' | 'resistor'
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('home')
+
+  useEffect(() => {
+    document.title = `Stompbox Notebook · build ${__BUILD_NUMBER__}`
+  }, [])
 
   return (
     <div className="app-shell">
@@ -24,7 +28,7 @@ export default function App() {
         ) : (
           <span className="topbar-spacer" />
         )}
-        <span className="build-badge" title="Build number">
+        <span className="build-badge" title={`Deployed build ${__BUILD_NUMBER__}`}>
           build {__BUILD_NUMBER__}
         </span>
       </header>
