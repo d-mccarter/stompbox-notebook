@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { COLORS, type BandColor, type BandCount, type BandSlot } from './colors'
 import { swatchAriaLabel, swatchValueLabel } from './encode'
 import { bandCenterPercents } from './layout'
@@ -9,6 +10,13 @@ interface DecodeBoardProps {
   bandCount: BandCount
   slots: BandSlot[]
   onBandChange: (index: number, color: BandColor) => void
+  /** Rendered between leader lines and color columns (keeps value above tall stacks). */
+  readout?: ReactNode
+}
+
+/** Evenly spaced column centers across the full board width. */
+function columnCenterPercents(count: number): number[] {
+  return Array.from({ length: count }, (_, i) => ((i + 0.5) / count) * 100)
 }
 
 export function DecodeBoard({
@@ -16,8 +24,10 @@ export function DecodeBoard({
   bandCount,
   slots,
   onBandChange,
+  readout,
 }: DecodeBoardProps) {
-  const centers = bandCenterPercents(bandCount)
+  const bandCenters = bandCenterPercents(bandCount)
+  const columnCenters = columnCenterPercents(bandCount)
 
   return (
     <div className="decode-board">
@@ -25,33 +35,33 @@ export function DecodeBoard({
 
       <svg
         className="leader-lines"
-        viewBox="0 0 100 28"
+        viewBox="0 0 100 36"
         preserveAspectRatio="none"
         aria-hidden="true"
       >
-        {centers.map((x, i) => (
+        {bandCenters.map((bandX, i) => (
           <line
             key={`leader-${i}`}
             className="leader-line"
-            x1={x}
+            x1={bandX}
             y1="0"
-            x2={x}
-            y2="28"
+            x2={columnCenters[i]}
+            y2="36"
             vectorEffect="non-scaling-stroke"
           />
         ))}
       </svg>
 
-      <div className="band-columns" style={{ ['--band-count' as string]: bandCount }}>
+      {readout ? <div className="decode-readout-slot">{readout}</div> : null}
+
+      <div
+        className="band-columns"
+        style={{ ['--band-count' as string]: bandCount }}
+      >
         {slots.map((slot, index) => {
           const selected = bands[index]
-          const x = centers[index]
           return (
-            <div
-              key={slot.key}
-              className="band-column"
-              style={{ left: `${x}%` }}
-            >
+            <div key={slot.key} className="band-column">
               <div className="band-column-head">
                 <span className="band-column-index">{index + 1}</span>
                 <span className="band-column-role">{shortRole(slot.label)}</span>
@@ -85,9 +95,7 @@ export function DecodeBoard({
                   )
                 })}
               </div>
-              <p className="band-column-selected">
-                {COLORS[selected].label}
-              </p>
+              <p className="band-column-selected">{COLORS[selected].label}</p>
             </div>
           )
         })}
